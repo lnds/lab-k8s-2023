@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/lnds/lab-ic-ms/api/database"
@@ -16,10 +18,12 @@ func server(bind, port string) {
 
 	setupRoutes(app)
 
+	fmt.Println("listening in " + bind + ":" + port)
 	app.Listen(bind + ":" + port)
 }
 
 func setupRoutes(app *fiber.App) {
+	fmt.Println("setup routes")
 	app.Get("/movies", handlers.ListMovies)
 	app.Get("/movies/:id", handlers.GetMovie)
 	app.Post("/movies", handlers.CreateMovie)

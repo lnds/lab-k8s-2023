@@ -14,13 +14,7 @@ Además debes tener una cuenta en dockerhub: https://hub.docker.com
 
 # Paso 1
 
-Modifica el archivo `movies-api/Dockerfile` agregándole esta linea al final:
-
-```
-CMD ["/movies-api", "-b", "${BIND_IP}", "-p", "${BIND_PORT}"]
-```
-
-Luego construye una imagen y publicala en tu cuenta en `docker-hub`:
+Construye una imagen para `movies-api` y publicala en tu cuenta en `docker-hub`:
 
 ```
 cd movies-api
@@ -32,13 +26,7 @@ cd ..
 
 ## Paso 2
 
-Modifica el archivo `movies-front/Dockerfile` agregándole esta linea al final:
-
-```
-CMD ["npm", "start]
-```
-
-Luego construye una imagen y publícala en tu cuenta en `docker-hub`:
+Luego construye una imagen para `movies-front` y publícala en tu cuenta en `docker-hub`:
 
 ```
 cd movies-front
@@ -49,6 +37,7 @@ cd ..
 ```
 
 ## Paso 3
+
 Vamos a iniciar minikube
 
 ```
@@ -61,3 +50,142 @@ Abre otro terminal y ejecuta el dashboard:
 ```
 minikube dashboard
 ```
+
+
+## Paso 4
+
+Revisa el contenido de la carpeta `k8s/base`.
+
+Encontrarás dos archivos, el primero es `movies-app-namespace.yaml` que contiene lo siguiente:
+
+```
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: movies-app
+  labels:
+    name: movies-app
+```
+
+Esto define el namespace `movies-app` que es donde residirán todos los objetos que crearemos.
+
+El otro archivo es `movies-app-storage-class.yaml`, que define un storage class que será usado para crear un volumen persistente para nuestra base de datos posteriormente.
+
+```
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: fast
+provisioner: k8s.io/minikube-hostpath
+parameters:
+  type: pd-ssd
+```
+
+Luego para crear estos objetos debes localizarte en el directorio `k8s` y ejecutar:
+
+```
+kubectl apply -f base
+```
+
+## Paso 5
+
+Ahora vamos a crear la base postgres, esta se define en los archivos bajo la carpeta `postgres`.
+
+El archivo `postgres-secrets.yaml` contiene la clave usada en la base de datos, que se encuentra codificada en base64, que es la forma que tiene K8s para codificar los secrets.
+
+El archivo `postgres-service` define el servicio postgres, que será usado posteriormente por migrations y los servicios. Acá se define el port que usará el servicio, entre otros parámetros.
+
+Por último el archivo `postgres-statefullset.yaml` crea un `StatefulSet` que es la forma de crear objetos persistentes, en particular, acá configuramos los volúmenes persistentes donde quedará la base de datos.
+
+Aplicamos estos objetos con el siguiente comando:
+
+```
+kubectl apply -f postgres
+```
+
+## Paso 6
+
+Vamos a ejecutar la migración de datos con flyway usando un Job.
+
+El job ya se encuentra configurado en el archivo `migrations/migration-job.yaml`. Este archivo requiere un objeto `config-map` que vamos a crear con el siguiente comando:
+
+```
+kubectl create configmap migration-config --from-file=../flyway/sql -o yaml --dry-run=client > migration/migration-config-map.yaml
+```
+
+Este comando va a crear el archivo `migration/migration-config-map.yaml` con el siguiente contenido:
+
+```
+apiVersion: v1
+data:
+  V1__Create_directors_table.sql: |-
+    CREATE TABLE directors (
+        id serial PRIMARY KEY,
+        name varchar(100) NOT NULL
+    )
+  V2__Create_movies_table.sql: |-
+    CREATE TABLE movies(
+        id serial PRIMARY KEY,
+        title varchar(150) NOT NULL,
+        year int NOT NULL,
+        description text,
+        director_id integer,
+        constraint fk_movies_directors
+            foreign key (director_id)
+            REFERENCES directors(id)
+    )
+  V3__Add_directors.sql: |
+    insert into directors(name) values('Cristopher Nolan');
+    insert into directors(name) values('Greta Gerwig');
+  V4__Add_movies.sql: |
+    insert into movies(title, year, director_id, description) values('Oppenheimer', 2023, 1, 'Epic Movie about the father of A-Bomb');
+    insert into movies(title, year, director_id, description) values('Barbie', 2023, 2, 'Comedy and Musical on the popular doll');
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: migration-config
+```
+
+Fíjate como hemos "copiado" el contenido de los archivos de migración flyway dentro de la sección `data:` de este archivo.
+
+Aplicaremos la migración ejecutando el siguiente comando:
+
+```
+kubectl apply -f migration
+```
+
+Después de esto tenemos nuestra base de datos cargada con los datos iniciales.
+
+# Paso 7
+
+Ahora vamos a crear los deployments para nuestros dos imágenes que creamos en el paso 1.
+
+Debes modificar los archivos `k8s/movies-api-deployment.yaml` y `k8s/movies-front-deployment.yaml`.
+
+Busca la linea que contiene el texto: `image: TU_USUARIO/movies-front:v1` en `k8s/movies-front-deployment.yaml` y reemplaza TU_USUARIO por el nombre de tu usuario en docker-hub.
+
+
+Busca la linea que contiene el texto: `image: TU_USUARIO/movies-api:v1` en `k8s/movies-api-deployment.yaml` y reemplaza TU_USUARIO por el nombre de tu usuario en docker-hub.
+
+Luego ejecuta:
+
+```
+kubectl apply -f migration
+```
+
+
+Para probar debemos habilitar `INGRESS` del siguiente modo:
+
+```
+minikube addons enable ingress
+```
+
+Luego ejecuta:
+
+```
+minikube tunnel
+```
+
+Con esto habilitas el tunnel para exponer los servicios a través de la dirección IP `127.0.0.1`.
+
+Si todo sale bien deberías poder acceder a la aplicación en tu navegador en la dirección `http://localhost:8080`.

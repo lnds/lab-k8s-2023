@@ -45,7 +45,7 @@ func ConnectDb(dsn string) {
 		os.Exit(2)
 	}
 
-	log.Println("connected")
+	log.Println("database connected")
 	db.Logger = logger.Default.LogMode(logger.Info)
 
 	DB = NewDbInstance(db)
