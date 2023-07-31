@@ -55,6 +55,7 @@ Abre otro terminal y ejecuta el dashboard:
 minikube dashboard
 ```
 
+Este comando abrirá tu navegador y te mostrará el dashboard de k8s.
 
 ## Paso 4
 
@@ -91,11 +92,26 @@ Luego para crear estos objetos debes localizarte en el directorio `k8s` y ejecut
 kubectl apply -f base
 ```
 
+Entra al dashboard y selecciona el namespace `movies-app` en el combobox. Haz click en `Storage Classes` (debajo de `Config and Storage`) y verifica que aparece `fast` y `standard`.
+
+También puedes obtener esta información en la consola del siguiente modo:
+
+```
+kubectl get storageclass --namespace=movies-app
+```
+
+Si no quieres tener que escribir el namespace en cada comando `kubectl` puedes cambiar el contexto así:
+
+```
+kubectl config set-context --current --namespace=movies-app
+```
+
+
 ## Paso 5
 
 Ahora vamos a crear la base postgres, esta se define en los archivos bajo la carpeta `postgres`.
 
-El archivo `postgres-secrets.yaml` contiene la clave usada en la base de datos, que se encuentra codificada en base64, que es la forma que tiene K8s para codificar los secrets.
+El archivo `postgres-secrets.yaml` contiene la clave usada en la base de datos, que se encuentra codificada en base64, que es la forma que tiene K8s para codificar los secrets. El valor que está almacenado se puede cambiar, siempre que lo codifiques en base64.
 
 El archivo `postgres-service` define el servicio postgres, que será usado posteriormente por migrations y los servicios. Acá se define el port que usará el servicio, entre otros parámetros.
 
