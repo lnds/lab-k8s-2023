@@ -130,7 +130,7 @@ Vamos a ejecutar la migración de datos con flyway usando un Job.
 El job ya se encuentra configurado en el archivo `migrations/migration-job.yaml`. Este archivo requiere un objeto `config-map` que vamos a crear con el siguiente comando:
 
 ```
-kubectl create configmap migration-config --from-file=../flyway/sql -o yaml --dry-run=client > migration/migration-config-map.yaml
+kubectl create configmap migration-config --from-file=../flyway/sql -o yaml --namespace=movies-app --dry-run=client > migration/migration-config-map.yaml
 ```
 
 Este comando va a crear el archivo `migration/migration-config-map.yaml` con el siguiente contenido:
