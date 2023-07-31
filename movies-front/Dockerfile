@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1
+
 FROM node:20.5-alpine3.17 as build-stage
 
 WORKDIR /usr/app
@@ -10,6 +12,8 @@ COPY . .
 
 RUN npm run build
 
-FROM nginx:stable-alpine
+FROM nginx:stable-alpine AS build-release-stage
 
-COPY build/ /usr/share/nginx/html
+WORKDIR /
+
+COPY --from=build-stage /usr/app/build/ /usr/share/nginx/html
