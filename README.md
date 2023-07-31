@@ -24,6 +24,8 @@ docker push TU_USUARIO/movies-api:v1
 cd ..
 ```
 
+Revisa que tu imagen aparece en el sitio de docker-hub.
+
 ## Paso 2
 
 Luego construye una imagen para `movies-front` y publícala en tu cuenta en `docker-hub`:
@@ -35,6 +37,8 @@ docker tag TU_USUARIO/movies-front TU_USUARIO/movies-front:v1
 docker push TU_USUARIO/movies-front:v1
 cd ..
 ```
+
+Revisa que tu imagen aparece en el sitio de docker-hub.
 
 ## Paso 3
 
