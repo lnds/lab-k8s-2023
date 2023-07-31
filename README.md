@@ -176,6 +176,22 @@ kubectl apply -f migration
 
 Después de esto tenemos nuestra base de datos cargada con los datos iniciales.
 
+Puedes verificarlo "entrando" a la base postgres. En el dashbaord selecciona `Pods` en el extremo derecho del Pods `postgres-0` aparecen tres puntos verticales, este es un menú, ahi selecciona la opción `Exec`, esto abre un shell en el pod y puedes ingresar a la base de datos haciendo:
+
+```
+psql -U postgres
+```
+
+Entrando en la base de datos puedes realizar consultas para ver los datos que poblamos con la migración.
+
+Puedes hacer lo mismo en la linea de comandos del siguiente modo:
+
+```
+kubectl exec --stdin --tty  postgres-0 -- /bin/bash
+root@posrgres-0:/# psql -U postgres
+```
+
+
 # Paso 7
 
 Ahora vamos a crear los deployments para nuestros dos imágenes que creamos en el paso 1.
