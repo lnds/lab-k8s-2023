@@ -206,7 +206,7 @@ Busca la linea que contiene el texto: `image: TU_USUARIO/movies-api:v1` en `k8s/
 Luego ejecuta:
 
 ```
-kubectl apply -f migration
+kubectl apply -f deployment
 ```
 
 
